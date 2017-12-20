@@ -89,6 +89,6 @@ class ForensicComputerScientist
 
         }
 
-        echo "Murdered is: " . $person . "\n";
+        echo "Murderer is: " . $person . "\n";
     }
 }

@@ -59,7 +59,6 @@ class Practical
             ];
         }
 
-        var_dump($bulk);
         \DB::table('buyers')->insert($bulk);
 
     }

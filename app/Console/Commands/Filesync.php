@@ -6,6 +6,7 @@ use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\File;
+use App\Log;
 
 /**
  * Class AutomatedCharges automatically charges merchants when necessary
@@ -45,22 +46,54 @@ class Filesync extends Command
 
         Config::set('filesystems.disks.s3.bucket', $bucket);
 
-        // Upload files to AWS S3
+        // Check files on Local
         foreach ($files as $file) {
-            $filePath = pathinfo($file)['basename'];
-            $exists = Storage::disk('s3')->has($filePath);
-            if (!$exists) {
-                Storage::disk('s3')->put($filePath, File::get($file), 'public');
+            $fileName = pathinfo($file)['basename'];
+
+            if (!Log::where('bucket', $bucket)->where('filename', $fileName)->exists()) {
+                $log = new Log();
+                $log->bucket = $bucket;
+                $log->filename = $fileName;
+                $log->action = 'local';
+                $log->save();
             }
         }
 
-        // Get all files from AWS S3
+        // Check files on AWS S3
         $files = Storage::disk('s3')->files();
         foreach ($files as $file) {
-            $exists = is_file($dir . '/' . $file);
-            if (!$exists) {
-                $contents = Storage::disk('s3')->get($file);
-                File::put($dir . '/' . $file, $contents);
+
+            if (!Log::where('bucket', $bucket)->where('filename', $file)->exists()) {
+                $log = new Log();
+                $log->bucket = $bucket;
+                $log->filename = $file;
+                $log->action = 'amazon';
+                $log->save();
+            }
+        }
+
+        // Sync to local
+        $files = Log::where('bucket', $bucket)->where('action', 'amazon')->get();
+
+        foreach ($files as $file) {
+            $contents = Storage::disk('s3')->get($file->filename);
+            if (File::put($dir . '/' . $file->filename, $contents)) {
+                $log = Log::find($file->id);
+                $log->action = 'synced';
+                $log->save();
+            }
+
+        }
+
+        // Sync to AWS
+        $files = Log::where('bucket', $bucket)->where('action', 'local')->get();
+
+        foreach ($files as $file) {
+
+            if (Storage::disk('s3')->put($file->filename, File::get($dir . '/' . $file->filename), 'public')) {
+                $log = Log::find($file->id);
+                $log->action = 'synced';
+                $log->save();
             }
         }
 

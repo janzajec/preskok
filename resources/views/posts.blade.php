@@ -1,4 +1,4 @@
-<table>
+<table class="table-bordered">
     <thead>
     <tr>
         <td>#</td>
@@ -28,5 +28,8 @@
 
     </tbody>
 </table>
+
+<hr />
+
 
 {{ $posts->links() }}

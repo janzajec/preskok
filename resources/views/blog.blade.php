@@ -6,7 +6,7 @@
 
     <style>
 
-        table, th, td {
+        table.table-bordered, th.table-bordered, td.table-bordered {
             border: 1px solid black;
         }
 
@@ -30,6 +30,34 @@
 <body>
 
 <h1>Posts</h1>
+
+<hr />
+
+
+<div class="search">
+    <form>
+        <table>
+            <tr>
+                <td>Name</td>
+                <td><input type="text" id="first_name" name="first_name" /></td>
+            </tr>
+            <tr>
+                <td>Surname</td>
+                <td><input type="text" name="last_name" /></td>
+            </tr>
+            <tr>
+                <td>Sale date</td>
+                <td><input type="text" name="sale_date" /></td>
+            </tr>
+            <tr>
+                <td></td>
+                <td><button type="button" onclick="getPosts(1)">Submit</button></td>
+            </tr>
+        </table>
+    </form>
+</div>
+
+<hr />
 
 <div class="posts">
     @include('posts')
@@ -57,8 +85,13 @@
     });
 
     function getPosts(page) {
+
+        var first_name = $("#first_name").val();
+        var last_name = $("#last_name").val();
+        var sale_date = $("#sale_date").val();
+
         $.ajax({
-            url: '?page=' + page,
+            url: '?page=' + page + '&first_name=' + first_name + '&last_name=' + last_name + '&sale_date=' + sale_date,
             dataType: 'json'
         }).done(function (data) {
             $('.posts').html(data);
